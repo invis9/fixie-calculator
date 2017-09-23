@@ -1,0 +1,207 @@
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Lekton" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="calculator">
+            <div class="title">Fixed Gear Calculator</div>
+            <div class="controls">
+                <div class="radio-buttons">
+                    <label class="control control--radio">Metric
+                        <input type="radio" name="units" id="metric" value="metric" checked="checked" onclick="updateValues()" />
+                        <div class="control__indicator"></div>
+                    </label>
+                    <label class="control control--radio">Imperial
+                        <input type="radio" name="units" id="imperial" value="imperial" onclick="updateValues()" />
+                        <div class="control__indicator"></div>
+                    </label>
+                </div>
+                <div class="chainring-group">
+                    <label for="chainring-size">Chainring</label>
+                    <select id="chainring-size" class="chainring-select" onchange="updateValues()"></select>
+                </div>
+                <div class="cog-group">
+                    <label for="cog-size">Cog</label>
+                    <select id="cog-size" class="cog-select" onchange="updateValues()"></select>
+                </div>
+                <div class="tyre-group">
+                    <label for="tyre-size">Tyre</label>
+                    <select id="tyre-size" class="tyre-select" onchange="updateValues()"></select>
+                </div>
+            </div>
+            <div class="results">
+                <div class="result-row">
+                    <span class="result-title">Ratio:</span><span id="ratio" class="result-data"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-title">Development:</span>
+                    <span><span id="development" class="result-data"></span><span id="unitText" class="result-data"></span></span>
+                </div>
+                <div class="result-row cadence-row">
+                    <span class="result-title">Cadence</span>
+                </div>
+                <div id="cadence-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        const INCHES_PER_METRE = 39.37007874;
+        const INCHES_PER_MILE = 63360;
+        const METRES_PER_KM = 1000;
+
+        const MIN_CHAINRING_SIZE = 28;
+        const MAX_CHAINRING_SIZE = 59;
+        const MIN_COG_SIZE = 9;
+        const MAX_COG_SIZE = 23;
+        const MIN_CADENCE_RPM = 50;
+        const MAX_CADENCE_RPM = 130;
+        const CADENCE_INCREMENT = 10;
+
+        const TYRE_OPTIONS = [
+            { 'name': '700x44', 'circumference-mm': 2224 },
+            { 'name': '700x38', 'circumference-mm': 2180 },
+            { 'name': '700x35', 'circumference-mm': 2168 },
+            { 'name': '700x32', 'circumference-mm': 2155 },
+            { 'name': '700x28', 'circumference-mm': 2136 },
+            { 'name': '700x25', 'circumference-mm': 2105 },
+            { 'name': '700x23', 'circumference-mm': 2097 },
+            { 'name': '700x20', 'circumference-mm': 2086 },
+            { 'name': '27x1\'3/8', 'circumference-mm': 2169 },
+            { 'name': '27x1\'1/4', 'circumference-mm': 2161 },
+            { 'name': '27x1\'1/8', 'circumference-mm': 2155 },
+            { 'name': '27x1\'', 'circumference-mm': 2145 },
+            { 'name': '26x2.125', 'circumference-mm': 2070 },
+            { 'name': '26x1\'3/8', 'circumference-mm': 2068 },
+            { 'name': '26x1.9', 'circumference-mm': 2055 },
+            { 'name': '26x1.5', 'circumference-mm': 1985 },
+            { 'name': '26x1.25', 'circumference-mm': 1953 },
+            { 'name': '26x1', 'circumference-mm': 1913 },
+            { 'name': '26x1 (650c)', 'circumference-mm': 1952 },
+            { 'name': 'Wide Tubular', 'circumference-mm': 2117 },
+            { 'name': 'Narrow Tubular', 'circumference-mm': 2105 },
+            { 'name': '24', 'circumference-mm': 1916 },
+            { 'name': '24x1', 'circumference-mm': 1753 },
+            { 'name': '20x1.75', 'circumference-mm': 1491 },
+            { 'name': '20x1\'1/4', 'circumference-mm': 1618 },
+            { 'name': '17x1\'1/4', 'circumference-mm': 1325 },
+            { 'name': '16x1\'3/8', 'circumference-mm': 1282 }
+        ];
+
+        var chainringSelect = document.getElementById('chainring-size');
+        for(var i = MIN_CHAINRING_SIZE; i <= MAX_CHAINRING_SIZE; i++) {
+            var opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i + 'T';
+            chainringSelect.appendChild(opt);
+        }
+
+        var cogSelect = document.getElementById('cog-size');
+        for(var j = MIN_COG_SIZE; j <= MAX_COG_SIZE; j++) {
+            var opt = document.createElement('option');
+            opt.value = j;
+            opt.textContent = j + 'T';
+            cogSelect.appendChild(opt);
+        }
+
+        var tyreSelect = document.getElementById('tyre-size');
+        for(var tyre of TYRE_OPTIONS) {
+            console.log(tyre);
+            var opt = document.createElement('option');
+            opt.value = tyre['circumference-mm'];
+            opt.textContent = tyre['name'];
+            tyreSelect.appendChild(opt);
+        }
+
+        var cadenceList = document.getElementById('cadence-list');
+        for(var k = MIN_CADENCE_RPM; k <= MAX_CADENCE_RPM; k += CADENCE_INCREMENT) {
+            var cadenceRow = document.createElement('div');
+            cadenceRow.classList.add('cadence-row');
+
+            var speedData = document.createElement('span');
+            speedData.id = 'speed' + k;
+            speedData.classList.add('speed-data');
+            
+            var speedUnitText = document.createElement('span');
+            speedUnitText.classList.add('speed-unit-text');
+
+            var cadenceText = document.createElement('span');
+            cadenceText.textContent = '@ ' + k + 'rpm';
+
+            cadenceRow.appendChild(speedData);
+            cadenceRow.appendChild(speedUnitText);
+            cadenceRow.appendChild(cadenceText);
+            cadenceList.appendChild(cadenceRow);
+        }
+
+        updateValues();
+
+        function updateValues() {
+            setRatio();
+            setDevelopment();
+
+            for(var i = MIN_CADENCE_RPM; i <= MAX_CADENCE_RPM; i += CADENCE_INCREMENT) {
+                setSpeed('speed' + i, i);
+            }
+        }
+
+        function setRatio() {
+            var ratio = document.getElementById('ratio');
+            ratio.textContent = Math.round(getRatio() * 100) / 100;
+        }
+
+        function getRatio() {
+            return chainringSelect.value / cogSelect.value;
+        }
+
+        function setDevelopment() {
+            var units = document.querySelector('input[name="units"]:checked').value;
+            var development = document.getElementById('development');
+            var unitElement = document.getElementById('unitText');
+
+            if(units === 'imperial') {
+                development.textContent = Math.round(getDevelopment(units) * 100) / 100;
+                unitElement.textContent = 'in.';
+            } else {
+                development.textContent = Math.round(getDevelopment(units) * 100) / 100;
+                unitElement.textContent = 'm';
+            }
+        }
+
+        function getDevelopment(units) {
+            var tyreSize = document.getElementById('tyre-size');
+
+            if(units === 'imperial') {
+                return ((getRatio() * tyreSize.value) / 1000) * INCHES_PER_METRE;
+            } else {
+                return (getRatio() * tyreSize.value) / 1000;
+            }
+        }
+
+        function setSpeed(element, cadence) {
+            var units = document.querySelector('input[name="units"]:checked').value;
+            document.getElementById(element).textContent = Math.round(getSpeed(cadence, units) * 10) / 10;
+
+            if(units === 'imperial') {
+                for(var element of document.querySelectorAll('span.speed-unit-text')) {
+                    element.textContent = 'mph';
+                }
+            } else {
+                for(var element of document.querySelectorAll('span.speed-unit-text')) {
+                    element.textContent = 'kph';
+                }
+            }
+        }
+
+        function getSpeed(cadence, units) {
+            if(units === 'imperial') {
+                return (cadence * 60) * (getDevelopment(units) / INCHES_PER_MILE);
+            } else {
+                return (cadence * 60) * (getDevelopment(units) / METRES_PER_KM);
+            }
+        }
+    </script>
+</body>
+</html>

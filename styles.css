@@ -1,0 +1,116 @@
+body {
+    font-family: 'Lekton', sans-serif;
+}
+
+.container {
+    width: 300px;
+}
+
+.calculator {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    background-color: #ff5858;
+    color: #fff;
+    font-size: 16px;
+    text-transform: uppercase;
+    font-weight: bold;
+    text-indent: 10px;
+}
+
+.radio-buttons {
+    display: flex;
+    justify-content: space-around;
+    padding: 5px 0px;
+}
+
+.control {
+    position: relative;
+    display: block;
+    padding-left: 30px;
+    cursor: pointer;
+}
+
+.control input {
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+}
+
+.control__indicator {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    background: #ccc;
+}
+
+.control__indicator:after {
+    position: absolute;
+    display: none;
+    content: '';
+}
+
+.control input:checked ~ .control__indicator:after {
+    display: block;
+}
+
+.control--radio .control__indicator:after {
+    top: 4px;
+    left: 4px;
+    width: 11px;
+    height: 11px;
+    background: #ff5858;
+}
+
+.chainring-group, .cog-group, .tyre-group {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+}
+
+.chainring-select, .cog-select, .tyre-select {
+    width: 70%;
+}
+
+.results {
+    background-color: #000;
+    color: #999;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0px 10px;
+}
+
+.result-title {
+    font-size: 20px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.result-data {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ff5858;
+}
+
+.cadence-row {
+    display: flex;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.speed-data {
+    color: #ff5858;
+}
+
+.speed-unit-text {
+    padding: 0px 5px;
+}
